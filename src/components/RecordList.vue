@@ -89,9 +89,38 @@
             </div>
           </div>
 
+          <!-- Button trigger modal -->
+          <button type="button" class="btn btn-primary" v-on:click="addCustomPropModal.toggle()">
+            Add custom property
+          </button>
+
+          <!-- Modal -->
+          <div class="modal fade" id="addCustomPropModal" tabindex="-1" aria-labelledby="addCustomPropModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="addCustomPropModalLabel">Add Custom PDT property</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="form-floating mb-3">
+                    <input class="form-control" id="customPropName" placeholder="MyProperty" v-model="customPropName">
+                    <label for="customPropName">Property name</label>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-primary" v-on:click="addCustomProp()">Add to PDT</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+
           <div class="form-floating mb-3">
-            <input class="form-control" id="floatingInput" placeholder="MyPDT" v-model="pdtName">
-            <label for="floatingInput">PDT Name</label>
+            <input class="form-control" id="pdtName" placeholder="MyPDT" v-model="pdtName">
+            <label for="pdtName">PDT Name</label>
           </div>
 
           <button class="btn btn-primary" v-on:click="exportXML">Export to XML</button>
@@ -105,6 +134,7 @@
 <script>
 // import 'vue-octicon/icons'
 import * as util from '../util.js'
+import { Modal } from 'bootstrap';
 const xmlbuilder = require('xmlbuilder2');
 
 export default {
@@ -118,7 +148,8 @@ export default {
         fetching_domain_data:true,
         list_filter: "list_properties",
         exportedXML: "",
-        pdtName: ""
+        pdtName: "",
+        customPropName: ""
         }
     },
     computed: {
@@ -151,6 +182,11 @@ export default {
         // }
     },
     methods: {
+        addCustomProp: function() {
+          this.$set(this.basket, this.customPropName, {'name': this.customPropName});
+          this.customPropName = "";
+          this.addCustomPropModal.toggle();
+        },
         clearPDT: function() {
           this.basket = {};
         },
@@ -234,11 +270,14 @@ export default {
         fetch_domain_data: function() {
         }
     },
-    beforeMount(){
+    mounted(){
         // console.log(this.$route.query),
         // this.set_data_from_route(),
         // this.fetch_records(),
         // this.fetch_domain_data()
+        this.addCustomPropModal = new Modal(document.getElementById('addCustomPropModal'), {
+            keyboard: false
+          })
     }
 }
 </script>
