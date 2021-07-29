@@ -89,6 +89,11 @@
             </div>
           </div>
 
+          <div class="form-floating mb-3">
+            <input class="form-control" id="floatingInput" placeholder="MyPDT" v-model="pdtName">
+            <label for="floatingInput">PDT Name</label>
+          </div>
+
           <button class="btn btn-primary" v-on:click="exportXML">Export to XML</button>
           <textarea class="h-25 form-control" v-model="exportedXML" placeholder="XML..."></textarea>
 
@@ -112,7 +117,8 @@ export default {
         fetching_records:true,
         fetching_domain_data:true,
         list_filter: "list_properties",
-        exportedXML: ""
+        exportedXML: "",
+        pdtName: ""
         }
     },
     computed: {
@@ -167,7 +173,7 @@ export default {
         },
         exportXML: function( ) {
           const root = xmlbuilder.create({ version: '1.0' })
-          .ele('ProductDataTemplate')
+          .ele('ProductDataTemplate', {'name': this.pdtName})
 
             for (const item of Object.values(this.basket)) {
               root.ele({Property: item}).up();
