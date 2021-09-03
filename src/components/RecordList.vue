@@ -1,34 +1,45 @@
 <template>
   <div id="RecordList" class="row">
         <div id="filter-panel" :class="'col-2 '">
-          <h4>Search query <router-link tag="a" to="/" class="badge badge-link">[reset]</router-link></h4> 
+          <h3>Search query</h3>
           <form>
             <div class="input-group mb-3">
               <div class="input-group mb-3">
                 <input v-model="filter_anytext" type="text" class="form-control" placeholder="Search terms" aria-label="Search terms" aria-describedby="basic-addon2">
-                <button class="btn btn-outline-secondary" type="button" id="button-addon2" v-on:click="fetch_records()">Search</button>
+                <button class="btn btn-secondary btn-labeled" type="button" id="button-addon2" v-on:click="fetch_records()">
+                  <span class="btn-label">
+                    <i class="bi-search" role="img" aria-label="search"></i>
+                  </span>Search
+                </button>
               </div>
               
               <!-- <div class="input-group-append">
                 <button v-on:click="filter_anytext=''" class="btn btn-outline-secondary" type="button">Clear</button>
               </div> -->
             </div>
-            <div  class="form-group">
-              <label>Domains</label>
-              <!-- <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                <label class="btn-sm btn btn-secondary active">
-                  <input type="radio" name="options" id="option1" autocomplete="off" checked> OR
-                </label>
-                <label class="btn-sm btn btn-secondary">
-                  <input type="radio" name="options" id="option3" autocomplete="off"> AND
-                </label>
-              </div> -->
-              <div v-if="!loading_records">
-                <div v-for="dom in data_records['domains']" :key="dom.namespaceUri" class="form-check">
-                  <input v-model="filter_domains" class="form-check-input" type="checkbox" :value="dom.namespaceUri" :id="get_domain_version_name(dom)">
-                  <label class="form-check-label" :for="get_domain_version_name(dom)">
-                    {{get_domain_version_name(dom)}}
+            <div v-if="!loading_records">
+              <p class="text-black-50">
+                <i class="bi-diagram-2" role="img" aria-label="classification"></i> {{ loading_records ? 0 : this.data_records.classifications.length}} Classifications 
+                <br />
+                <i class="bi-card-heading" role="img" aria-label="property"></i> {{ loading_records ? 0 : this.data_records.properties.length }} Properties
+               </p>
+              <div class="form-group">
+                <label style="font-weight:600"><i class="bi-funnel" role="img" aria-label="funnel"></i> Filter by domain</label>
+                <!-- <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                  <label class="btn-sm btn btn-secondary active">
+                    <input type="radio" name="options" id="option1" autocomplete="off" checked> OR
                   </label>
+                  <label class="btn-sm btn btn-secondary">
+                    <input type="radio" name="options" id="option3" autocomplete="off"> AND
+                  </label>
+                </div> -->
+                <div>
+                  <div v-for="dom in data_records['domains']" :key="dom.namespaceUri" class="form-check">
+                    <input v-model="filter_domains" class="form-check-input" type="checkbox" :value="dom.namespaceUri" :id="get_domain_version_name(dom)">
+                    <label class="form-check-label" :for="get_domain_version_name(dom)">
+                      {{get_domain_version_name(dom)}}
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -38,63 +49,169 @@
         </div>
         <div id="record-list-panel" :class="'col '+ loading_records">
 
-          <h4>Search results</h4>
+          <h3>Search results</h3>
 
-          <input type="radio" class="btn-check" name="options" id="list_all" value="list_all" v-model="list_filter"  autocomplete="off">
-          <label class="btn btn-secondary" for="list_all">All ({{ loading_records ? 0 : this.data_records.classifications.length + this.data_records.properties.length }})</label>
-
-          <input type="radio" class="btn-check" name="options" id="list_classifications" value="list_classifications" v-model="list_filter" autocomplete="off">
-          <label class="btn btn-secondary" for="list_classifications">Classifications ({{ loading_records ? 0 : this.data_records.classifications.length}})</label>
-
-          <input type="radio" class="btn-check" name="options" id="list_properties" value="list_properties" v-model="list_filter" autocomplete="off">
-          <label class="btn btn-secondary" for="list_properties">Properties ({{ loading_records ? 0 : this.data_records.properties.length }})</label>
+          <ul class="nav nav-tabs">
+            <li class="nav-item">
+              <input type="radio" class="btn-check" name="options" id="list_classifications" value="list_classifications" v-model="list_filter" autocomplete="off">
+              <label class="btn nav-link" :class="{active: list_filter == 'list_classifications'}" for="list_classifications">Classifications</label>
+            </li>
+            <li class="nav-item">
+              <input type="radio" class="btn-check" name="options" id="list_properties" value="list_properties" v-model="list_filter" autocomplete="off">
+              <label class="btn nav-link" :class="{active: list_filter == 'list_properties'}" for="list_properties">Properties</label>
+            </li>
+          </ul>
+          
 
           <div v-if="!loading_records && (list_filter=='list_classifications' || list_filter=='list_all')">
-            <div v-for="item in filter_by_domain(data_records['classifications'])" :key="item.namespaceUri" class="card mb-3" style="">
-            
-              <div class="card-body">
-                <p class="card-text mt-2">Classification {{item.domainName}} > .. > {{item.parentClassificationName}}</p>
-                <h5 class="card-title mb-0">{{item.name}}</h5>
-                
-                <button class="btn btn-primary" v-on:click="addClassificationToBasket(item)">Add all properties to PDT</button>
-              </div>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th scope="col"></th>
+                    <th scope="col">Domain</th>
+                    <th scope="col">Parent classification and name</th>
+                    <th scope="col"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in filter_by_domain(data_records['classifications'])" :key="item.namespaceUri">
+                    <td><i class="bi-diagram-2" role="img" aria-label="classification"></i></td>
+                    <td>{{item.domainName}}</td>
+                    <td><span class="text-black-50">{{item.parentClassificationName}} ></span> <br /> {{item.name}}</td>
+                    <td>
+                      <button class="btn btn-primary btn-sm btn-labeled" type="button" id="button-addon2" v-on:click="addClassificationToBasket(item)">
+                        <span class="btn-label">
+                          <i class="bi-plus-circle" role="img" aria-label="add"></i>
+                        </span>Add properties to PDT
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
           <div v-if="!loading_records && (list_filter=='list_properties' || list_filter=='list_all')">
-            <div v-for="item in filter_by_domain(data_records['properties'])" :key="item.namespaceUri" class="card mb-3" style="">
-            
-              <div class="card-body">
-                <p class="card-text mt-2">Property {{item.domainName}}</p>
-                <h5 class="card-title mb-0">{{item.name}}</h5>
-                
-                <button class="btn btn-primary" v-on:click="addPropertyToBasket(item.namespaceUri)">Add to PDT</button>
-              </div>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th scope="col"></th>
+                    <th scope="col">Domain</th>
+                    <th scope="col">Name</th>
+                    <th scope="col"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in filter_by_domain(data_records['properties'])" :key="item.namespaceUri">
+                    <td><i class="bi-card-heading" role="img" aria-label="propterty"></i></td>
+                    <td>{{item.domainName}}</td>
+                    <td>{{item.name}}</td>
+                    <td>
+                      <button class="btn btn-primary btn-sm btn-labeled" type="button" id="button-addon2" v-on:click="addPropertyToBasket(item.namespaceUri)">
+                        <span class="btn-label">
+                          <i class="bi-plus-circle" role="img" aria-label="add"></i>
+                        </span>Add to PDT
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
+
         <div id="pdt-panel" :class="'col'">
 
-          <h4>Product Data Template</h4>
+          <h3>Product Data Template</h3>
 
-          <button class="btn btn-primary" v-on:click="clearPDT()">Clear PDT</button>
-
-          <br />
-
-          <div v-for="(item, index) in basket" :key="item.namespaceUri" class="card mb-3" style="">
-            
-            <div class="card-body">
-              <p class="card-text mt-2">Property {{item.domainName}}</p>
-              <h5 class="card-title mb-0">{{item.name}}</h5>
-              <button class="btn btn-danger" v-on:click="removePropertyFromBasket(index)">Remove</button>
-            </div>
+          <div class="btn-group" role="group" aria-label="PDT buttons">
+            <button type="button" class="btn btn-primary btn-labeled" v-on:click="addCustomPropModal.toggle()">
+              <span class="btn-label">
+                <i class="bi-plus-circle" role="img" aria-label="plus"></i>
+              </span>Add custom property
+            </button>
+            <button type="button" class="btn btn-primary btn-labeled" v-on:click="XMLExportModal.toggle()">
+              <span class="btn-label">
+                <i class="bi-save" role="img" aria-label="save"></i>
+              </span>Export XML
+            </button>
+            <button type="button" class="btn btn-danger btn-labeled" v-on:click="clearPDT()">
+              <span class="btn-label">
+                <i class="bi-trash" role="img" aria-label="trash"></i>
+              </span>Clear PDT
+            </button>
           </div>
 
-          <!-- Button trigger modal -->
-          <button type="button" class="btn btn-primary" v-on:click="addCustomPropModal.toggle()">
-            Add custom property
-          </button>
+          <h5 style="margin: 2em 0 1em 0">Properties in PDT ({{Object.keys(basket).length}})</h5>
 
-          <!-- Modal -->
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th scope="col"></th>
+                  <th scope="col">Name</th>
+                  <th scope="col"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="Object.keys(basket).length === 0">
+                  <td colspan="4" class="text-center">No properties added</td>
+                </tr>
+                <tr v-for="(item, index) in basket" :key="item.namespaceUri">
+                  <td><i class="bi-card-heading" role="img" aria-label="propterty"></i></td>
+                  <td>{{item.name}}</td>
+                  <td>
+                    <div class="btn-group" role="group" aria-label="Property actions">
+                      <button class="btn btn-primary btn-sm" type="button" id="button-addon2" v-on:click="inspectPropNS=item.namespaceUri; inspectPropModal.toggle()">
+
+                          <i class="bi-info-square-fill" role="img" aria-label="info"></i>
+
+                      </button>
+                      <button class="btn btn-danger btn-sm" type="button" id="button-addon2" v-on:click="removePropertyFromBasket(index)">
+
+                          <i class="bi-trash-fill" role="img" aria-label="remove"></i>
+
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-if="fetchting_basket_items">
+                  <td colspan="4" class="text-center text-black-50">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div> retrieving properties
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+
+          <!-- Modal inspect Property -->
+          <div class="modal fade" id="inspectPropModal" tabindex="-1" aria-labelledby="inspectPropModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="inspectPropModalLabel">Property attributes</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="table-responsive">
+                    <table class="table align-middle table-borderless">
+                      <tbody>
+                        <tr v-for="(item, index) in basket[inspectPropNS]" :key="index">
+                          <td class="fw-bold">{{index}}</td>
+                          <td>{{item}}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Modal Create Property -->
           <div class="modal fade" id="addCustomPropModal" tabindex="-1" aria-labelledby="addCustomPropModalLabel" aria-hidden="true">
             <div class="modal-dialog">
               <div class="modal-content">
@@ -115,17 +232,26 @@
               </div>
             </div>
           </div>
-
-
-
-          <div class="form-floating mb-3">
-            <input class="form-control" id="pdtName" placeholder="MyPDT" v-model="pdtName">
-            <label for="pdtName">PDT Name</label>
+          <!-- Modal Export -->
+          <div class="modal fade" id="XMLExportModal" tabindex="-1" aria-labelledby="XMLExportModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="XMLExportModalLabel">Export to XML</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="form-floating mb-3">
+                    <input class="form-control" id="pdtName" placeholder="MyPDT" v-model="pdtName">
+                    <label for="pdtName">PDT Name</label>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button class="btn btn-primary" v-on:click="downloadXML('test.xml')">Download XML</button>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <button class="btn btn-primary" v-on:click="exportXML">Export to XML</button>
-          <textarea class="h-25 form-control" v-model="exportedXML" placeholder="XML..."></textarea>
-
 
         </div>
       </div>
@@ -135,6 +261,7 @@
 // import 'vue-octicon/icons'
 import * as util from '../util.js'
 import { Modal } from 'bootstrap';
+// import { BIconBatteryFull, BIconArrow90degDown, BIconBookmark } from 'bootstrap-icons-vue';
 const xmlbuilder = require('xmlbuilder2');
 
 export default {
@@ -146,10 +273,12 @@ export default {
         filter_domains: [],
         fetching_records:true,
         fetching_domain_data:true,
+        fetchting_basket_items:false,
         list_filter: "list_properties",
         exportedXML: "",
         pdtName: "",
-        customPropName: ""
+        customPropName: "",
+        inspectPropNS: null
         }
     },
     computed: {
@@ -182,6 +311,20 @@ export default {
         // }
     },
     methods: {
+        downloadXML: function(fileName) {
+          this.exportXML();
+          var blob = new Blob([this.exportedXML], { type: 'xml' });
+
+          var a = document.createElement('a');
+          a.download = fileName;
+          a.href = URL.createObjectURL(blob);
+          a.dataset.downloadurl = ['xml', a.download, a.href].join(':');
+          a.style.display = "none";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function() { URL.revokeObjectURL(a.href); }, 1500);
+        },
         addCustomProp: function() {
           this.$set(this.basket, this.customPropName, {'name': this.customPropName});
           this.customPropName = "";
@@ -222,18 +365,22 @@ export default {
         },
         addPropertyToBasket: function ( namespaceUri ) {
           // fetch full data
+          this.fetchting_basket_items = true;
           fetch(util.PropertyUrl + "?namespaceUri=" + namespaceUri)
           .then(response => response.json())
           .then(data => {
             console.log(data);
             this.$set(this.basket, data.namespaceUri, data)
+            this.fetchting_basket_items = false;
           })
           .catch(error => {
             console.error('Error:', error);
+            this.fetchting_basket_items = false;
           });
         },
         addClassificationToBasket: function ( item ) {
           // fetch full data
+          this.fetchting_basket_items = true;
           fetch(util.ClassificationUrl + "?namespaceUri=" + item.namespaceUri)
           .then(response => response.json())
           .then(data => {
@@ -242,9 +389,11 @@ export default {
             for (const prop of data.classificationProperties) {
               this.addPropertyToBasket(prop.propertyNamespaceUri);
             }
+            this.fetchting_basket_items = false;
           })
           .catch(error => {
             console.error('Error:', error);
+            this.fetchting_basket_items = false;
           });
         },
         fetch_records: function() {
@@ -276,8 +425,14 @@ export default {
         // this.fetch_records(),
         // this.fetch_domain_data()
         this.addCustomPropModal = new Modal(document.getElementById('addCustomPropModal'), {
-            keyboard: false
-          })
+          keyboard: false
+        });
+        this.inspectPropModal = new Modal(document.getElementById('inspectPropModal'), {
+          keyboard: false
+        });
+        this.XMLExportModal = new Modal(document.getElementById('XMLExportModal'), {
+          keyboard: false
+        });
     }
 }
 </script>
@@ -291,4 +446,19 @@ export default {
 #record-list-panel.loading, #filter-panel.loading {
     opacity: 0.1;
 }
+
+.btn-label {
+	position: relative;
+	left: -12px;
+	display: inline-block;
+	padding: 6px 12px;
+	background: rgba(0, 0, 0, 0.07);
+	border-radius: 3px 0 0 3px;
+}
+
+.btn-labeled {
+	padding-top: 0;
+	padding-bottom: 0;
+}
+
 </style>
