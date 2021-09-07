@@ -4,7 +4,7 @@
       <router-link tag="a" to="/" class="navbar-brand">PDT configurator</router-link>
       <span class="navbar-brand">
       <button type="button" class="btn btn-sm btn-dark" v-on:click="aboutModal.toggle()">
-          Made by <b>3DGI</b>
+          Made by <b>3DGI</b> <i style="margin-left:0.75em" class="bi-question-circle-fill" role="img" aria-label="info"></i>
       </button>
       </span>
     </nav>
