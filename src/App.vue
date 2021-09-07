@@ -21,7 +21,7 @@
           </div>
           <div class="modal-body">
             <p>
-              This proof of concept was developed by <a href="https://3dgi.nl/">3DGI</a>. It demonstrates how one can compose a product data template straight from the <a href="https://github.com/buildingSMART/bSDD">buildingSMART Data Dictionary</a> using the <a href="https://bs-dd-api-prototype.azurewebsites.net/swagger/index.html">bSDD API</a>.
+              This proof of concept was developed by <a href="https://3dgi.nl/">3DGI</a> for <a href="https://www.buildingsmart.org/">buildingSMART</a>. It demonstrates how one can compose a product data template straight from the <a href="https://github.com/buildingSMART/bSDD">buildingSMART Data Dictionary</a> using the <a href="https://bs-dd-api-prototype.azurewebsites.net/swagger/index.html">bSDD API</a>.
             </p>
             <p>
               The XML specification is preliminary as there is no definitive PDT XSD available yet.
