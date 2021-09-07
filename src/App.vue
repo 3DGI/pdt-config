@@ -2,11 +2,11 @@
   <div id="app">
     <nav class="navbar sticky-top navbar-dark bg-dark mb-3">
       <router-link tag="a" to="/" class="navbar-brand">PDT configurator</router-link>
-        <span class="navbar-brand">
-        <button type="button" class="btn btn-sm btn-dark" v-on:click="aboutModal.toggle()">
-            <i class="bi-question-circle" role="img" aria-label="info"></i>
-        </button>
-        </span>
+      <span class="navbar-brand">
+      <button type="button" class="btn btn-sm btn-dark" v-on:click="aboutModal.toggle()">
+          Made by <b>3DGI</b>
+      </button>
+      </span>
     </nav>
     <div class="container-fluid">
     <router-view></router-view>
@@ -24,7 +24,7 @@
               This proof of concept was developed by <a href="https://3dgi.nl/">3DGI</a>. It demonstrates how one can compose a product data template straight from the <a href="https://github.com/buildingSMART/bSDD">buildingSMART Data Dictionary</a> using the <a href="https://bs-dd-api-prototype.azurewebsites.net/swagger/index.html">bSDD API</a>.
             </p>
             <p>
-              The XML specification is preliminary as there is no definive PDT XML specification available yet.
+              The XML specification is preliminary as there is no definitive PDT XSD available yet.
             </p>
           </div>
         </div>
