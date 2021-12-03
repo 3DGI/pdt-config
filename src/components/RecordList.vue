@@ -134,7 +134,7 @@
             <button type="button" class="btn btn-primary btn-labeled" v-on:click="XMLExportModal.toggle()">
               <span class="btn-label">
                 <i class="bi-save" role="img" aria-label="save"></i>
-              </span>Export XML
+              </span>Export
             </button>
             <button type="button" class="btn btn-danger btn-labeled" v-on:click="clearPDT()">
               <span class="btn-label">
@@ -247,7 +247,8 @@
                   </div>
                 </div>
                 <div class="modal-footer">
-                  <button class="btn btn-primary" v-on:click="downloadXML('test.xml')">Download XML</button>
+                  <button class="btn btn-primary" v-on:click="downloadGenericXML('pdt.xml')">Download generic XML</button>
+                  <button class="btn btn-primary" v-on:click="downloadIDS('pdt.xml')">Download IDS</button>
                 </div>
               </div>
             </div>
@@ -275,7 +276,8 @@ export default {
         fetching_domain_data:true,
         fetchting_basket_items:false,
         list_filter: "list_properties",
-        exportedXML: "",
+        XMLGenericExport: "",
+        IDSExport: "",
         pdtName: "",
         customPropName: "",
         inspectPropNS: null
@@ -311,9 +313,17 @@ export default {
         // }
     },
     methods: {
-        downloadXML: function(fileName) {
-          this.exportXML();
-          var blob = new Blob([this.exportedXML], { type: 'xml' });
+        downloadGenericXML(filename) {
+          this.exportGenericXML();
+          this.downloadXML(filename, this.XMLGenericExport)
+        },
+        downloadIDS(filename) {
+          this.exportIDS();
+          this.downloadXML(filename, this.IDSExport)
+        },
+        downloadXML: function(fileName, contents) {
+          
+          var blob = new Blob([contents], { type: 'xml' });
 
           var a = document.createElement('a');
           a.download = fileName;
@@ -350,7 +360,7 @@ export default {
           else
             return domain.name;
         },
-        exportXML: function( ) {
+        exportGenericXML: function( ) {
           const root = xmlbuilder.create({ version: '1.0' })
           .ele('ProductDataTemplate', {'name': this.pdtName})
 
@@ -358,7 +368,82 @@ export default {
               root.ele({Property: item}).up();
             }
           root.up()
-          this.exportedXML = root.end({ prettyPrint: true });
+          this.XMLGenericExport = root.end({ prettyPrint: true });
+        },
+        exportIDS: function( ) {
+          // build the xml
+          var xs = 'http://www.w3.org/2001/XMLSchema';
+          var xsi = 'http://www.w3.org/2001/XMLSchema-instance';
+          var xmlns = "http://www.w3.org/2000/xmlns/";
+          var ids = "http://standards.buildingsmart.org/IDS";
+
+          var idsType = document.implementation.createDocument(ids, "ids");
+          idsType.documentElement.setAttributeNS(xmlns, 'xmlns:ids', ids);
+          idsType.documentElement.setAttributeNS(xmlns, 'xmlns:xs', xs);
+          idsType.documentElement.setAttributeNS(xmlns, 'xmlns:xsi', xsi);
+          idsType.documentElement.setAttributeNS(xsi, 'xsi:schemaLocation', ids+" ids_04.xsd");
+
+          // ids:info
+          var ids_info = idsType.createElementNS(ids, "ids:info");
+          var ids_title = idsType.createElementNS(ids, "ids:title");
+          ids_title.appendChild(document.createTextNode(this.pdtName));
+          ids_info.appendChild(ids_title);
+          var ids_date = idsType.createElementNS(ids, "ids:date");
+          ids_info.appendChild(ids_date);
+          var ids_copyright = idsType.createElementNS(ids, "ids:copyright");
+          ids_info.appendChild(ids_copyright);
+          idsType.documentElement.appendChild(ids_info);
+
+          // ids:specification, there can be many
+          var ids_specification = idsType.createElementNS(ids, "ids:specification");
+          
+          var ids_applicability = idsType.createElementNS(ids, "ids:applicability");
+          
+          var ids_requirements = idsType.createElementNS(ids, "ids:requirements");
+          for (const item of Object.values(this.basket)) {
+            var ids_property = idsType.createElementNS(ids, "ids:property");
+            ids_property.setAttribute("location", "any");
+            ids_property.setAttribute("uri", item.namespaceUri);
+            
+            var ids_name = idsType.createElementNS(ids, "ids:name");
+            var ids_simpleValue = idsType.createElementNS(ids, "ids:simpleValue");
+            ids_simpleValue.appendChild(document.createTextNode(item.name));
+            ids_name.appendChild(ids_simpleValue);
+            ids_property.appendChild(ids_name);
+
+            var ids_propertyset = idsType.createElementNS(ids, "ids:propertyset");
+            ids_property.appendChild(ids_propertyset);
+
+            if ("description" in item) {
+              var ids_instructions = idsType.createElementNS(ids, "ids:instructions");
+              ids_instructions.appendChild(document.createTextNode(item.description));
+              ids_property.appendChild(ids_instructions);
+            }
+
+            var ids_value = idsType.createElementNS(ids, "ids:value");
+            var xs_restriction = idsType.createElementNS(xs, "xs:restriction");
+            if (item.dataType == "String") {
+              xs_restriction.setAttribute("base", "xs:string");
+            } else if (item.dataType == "Boolean") {
+              xs_restriction.setAttribute("base", "xs:boolean");
+            } else if (item.dataType == "Integer") {
+              xs_restriction.setAttribute("base", "xs:integer");
+            } else if (item.dataType == "Real") {
+              xs_restriction.setAttribute("base", "xs:float");
+            }
+            ids_value.appendChild(xs_restriction);
+            ids_property.appendChild(ids_value);
+            
+            ids_requirements.appendChild(ids_property);
+          }
+          
+
+          ids_specification.appendChild(ids_applicability);
+          ids_specification.appendChild(ids_requirements);
+          
+          idsType.documentElement.appendChild(ids_specification);
+                    
+          this.IDSExport = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + new XMLSerializer().serializeToString(idsType);
         },
         removePropertyFromBasket: function ( index ) {
           this.$delete(this.basket, index)
